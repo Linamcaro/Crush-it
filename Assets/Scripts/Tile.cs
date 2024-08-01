@@ -20,6 +20,7 @@ public class Tile : MonoBehaviour
         gameBoard.OnTileSelected(this);
     }
 
+    //hover mouse
     public void OnMouseEnter()
     {
         gameBoard.OnTileMoved(this);

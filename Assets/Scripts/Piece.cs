@@ -13,7 +13,7 @@ public class Piece : MonoBehaviour
     [SerializeField] private float pieceMovementTime;
 
     //pieces tipe
-    [SerializeField] private enum type
+    public enum type
     {
         elephant,
         giraffe,
@@ -27,7 +27,7 @@ public class Piece : MonoBehaviour
         snake
     };
 
-    [SerializeField] private type pieceType;
+    public type pieceType;
 
     public void PieceSetUp(int xCoord, int yCoord, GameBoard board)
     {
@@ -46,10 +46,11 @@ public class Piece : MonoBehaviour
         };
     }
 
+    /*
     [ContextMenu("Test Move")]
     public void MoveTest()
     {
         MovePiece(0, 0, -5);
-    }
+    }*/
 
 }
