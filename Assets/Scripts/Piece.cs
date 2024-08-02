@@ -6,14 +6,8 @@ using DG.Tweening;
 
 public class Piece : MonoBehaviour
 {
-
-    [SerializeField] public int x;
-    [SerializeField] public int y;
-    [SerializeField] private GameBoard gameBoard;
-    [SerializeField] private float pieceMovementTime;
-
     //pieces tipe
-    public enum type
+    public enum Type
     {
         elephant,
         giraffe,
@@ -27,7 +21,12 @@ public class Piece : MonoBehaviour
         snake
     };
 
-    public type pieceType;
+    [SerializeField] public int x;
+    [SerializeField] public int y;
+    [SerializeField] private GameBoard gameBoard;
+    [SerializeField] private float pieceMovementTime;
+
+    public Type pieceType;
 
     public void PieceSetUp(int xCoord, int yCoord, GameBoard board)
     {
@@ -36,14 +35,19 @@ public class Piece : MonoBehaviour
         gameBoard = board;
     }
 
-    public void MovePiece(int destX, int destY, int destZ)
+    public void MovePiece(int destX, int destY, float destZ = - 5f)
     {
+        //Debug.Log($"Moving piece from ({x}, {y}) to ({destX}, {destY})");
 
-        transform.DOMove(new Vector3(destX, destY, destZ), pieceMovementTime).SetEase(Ease.InOutCubic).onComplete =  () =>
+        transform.DOMove(new Vector3(destX, destY, destZ), pieceMovementTime).SetEase(Ease.InOutCubic).onComplete = () =>
         {
             x = destX;
             y = destY;
+
+            //Debug.Log($"Piece moved to ({x}, {y})");
         };
+
+        //Debug.Log($"Piece moved to ({x}, {y})");
     }
 
     /*
@@ -52,5 +56,5 @@ public class Piece : MonoBehaviour
     {
         MovePiece(0, 0, -5);
     }*/
-
 }
+
