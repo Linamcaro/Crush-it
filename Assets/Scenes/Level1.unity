@@ -386,8 +386,16 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5651763460029033748, guid: ca7aa586199ebb54e83eaa7f236ecc1c, type: 3}
+      propertyPath: timeBetweenPieces
+      value: 0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 5651763460029033748, guid: ca7aa586199ebb54e83eaa7f236ecc1c, type: 3}
       propertyPath: cameraVerticalOffset
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5651763460029033748, guid: ca7aa586199ebb54e83eaa7f236ecc1c, type: 3}
+      propertyPath: newPiecesCreationTime
+      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 5651763460029033748, guid: ca7aa586199ebb54e83eaa7f236ecc1c, type: 3}
       propertyPath: availablePieces.Array.size

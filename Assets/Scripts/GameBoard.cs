@@ -25,6 +25,9 @@ public class GameBoard : MonoBehaviour
     private Tile endTilePos; //end position of the tile to swap
     private bool isSwapingPieces = false; //True if two pieces are trying to swap 
 
+    [SerializeField] private float newPiecesCreationTime;
+    [SerializeField] private float timeBetweenPieces; //
+
 
     // Start is called before the first frame update
     void Start()
@@ -34,14 +37,14 @@ public class GameBoard : MonoBehaviour
 
         BoardSetUp();
         PositionCamera();
-        SetupPieces();
+        StartCoroutine(SetupPieces());
 
     }
 
     /// <summary>
     /// Creating the pieces
     /// </summary>
-    private void SetupPieces()
+    IEnumerator SetupPieces()
     {
         int maxIterations = 50;
         int currentIteration = 0;
@@ -50,23 +53,30 @@ public class GameBoard : MonoBehaviour
         {
             for (int y = 0; y < gridHeight; y++)
             {
-                
-                var newPiece = CreatePiece(x,y);
-                currentIteration = 0;
+                yield return new WaitForSeconds(timeBetweenPieces);
 
-                while (HasPreviewsMatches(x,y))
+                if (activePieces[x, y] == null)
                 {
-                    ClearPiece(x,y);
-                    newPiece = CreatePiece(x,y);
-                    currentIteration++;
-                    if(currentIteration > maxIterations)
+
+                    var newPiece = CreatePiece(x, y);
+                    currentIteration = 0;
+
+                    while (HasPreviewsMatches(x, y))
                     {
-                        break;
+                        ClearPiece(x, y);
+                        newPiece = CreatePiece(x, y);
+                        currentIteration++;
+                        if (currentIteration > maxIterations)
+                        {
+                            break;
+                        }
                     }
                 }
 
             }
         }
+
+        yield return null;
     }
 
     /// <summary>
@@ -79,7 +89,6 @@ public class GameBoard : MonoBehaviour
         var pieceToClear = activePieces[x, y];    
         Destroy(pieceToClear.gameObject);
         activePieces[x, y] = null;
-
 
     }
 
@@ -161,7 +170,10 @@ public class GameBoard : MonoBehaviour
     /// <param name="tileSelected"></param>
     public void OnTileSelected(Tile tileSelected)
     {
-        startTilePos = tileSelected;
+        if (!isSwapingPieces)
+        {
+            startTilePos = tileSelected;
+        }
     }
 
     /// <summary>
@@ -170,7 +182,10 @@ public class GameBoard : MonoBehaviour
     /// <param name="tileOver"></param>
     public void OnTileMoved(Tile tileOver)
     {
-        endTilePos = tileOver;
+        if (!isSwapingPieces)
+        {
+            endTilePos = tileOver;
+        }
     }
 
     /// <summary>
@@ -179,9 +194,12 @@ public class GameBoard : MonoBehaviour
     /// <param name="tileDropped"></param>
     public void OnTileDropped(Tile tileDropped)
     {
-        if (startTilePos != null && endTilePos != null && IsCloseTo(startTilePos, endTilePos))
+        if (!isSwapingPieces)
         {
-            StartCoroutine(SwapTiles());
+            if (startTilePos != null && endTilePos != null && IsCloseTo(startTilePos, endTilePos))
+            {
+                StartCoroutine(SwapTiles());
+            }
         }
 
     }
@@ -191,6 +209,8 @@ public class GameBoard : MonoBehaviour
     /// </summary>
     IEnumerator SwapTiles()
     {
+        isSwapingPieces = true;
+
         //Save refence of the pieces in the two positions
         var StartPiece = activePieces[startTilePos.x, startTilePos.y];
         var EndPiece = activePieces[endTilePos.x, endTilePos.y];
@@ -265,9 +285,48 @@ public class GameBoard : MonoBehaviour
         });
 
         List<int> columnsToFill = GetColumnsToFill(piecesToClear);
+        List<Piece> collapsedPieces = CollapseColumns(columnsToFill, 0.3f);
 
-       List<Piece> collapsedPieces = CollapseColumns(columnsToFill, 0.3f);
+        FindMatchRecursively(collapsedPieces);
 
+    }
+
+    private void FindMatchRecursively(List<Piece> collapsedPieces)
+    {
+        StartCoroutine(FMRecursively(collapsedPieces));
+    }
+
+    IEnumerator FMRecursively(List<Piece> collapsedPieces)
+    {
+        yield return new WaitForSeconds(1f);
+        List<Piece> newMatches = new List<Piece>();
+
+        collapsedPieces.ForEach(piece =>
+        {
+            var matches = GetMatchByPiece(piece.x, piece.y, 3);
+           
+            if (matches != null)
+            {
+                newMatches = newMatches.Union(matches).ToList();
+                ChangePieces(matches);
+            }
+        });
+
+        if(newMatches.Count > 0)
+        {
+            var newCollapsedPieces = CollapseColumns(GetColumnsToFill(newMatches), 0.3f);
+            yield return new WaitForSeconds(0.5f);
+            FindMatchRecursively(newCollapsedPieces);
+            
+        }
+        else
+        {
+            yield return new WaitForSeconds(newPiecesCreationTime);
+            isSwapingPieces = false;
+
+        }
+
+        yield return null;
     }
 
     /// <summary>
@@ -289,7 +348,7 @@ public class GameBoard : MonoBehaviour
             {
                 if (activePieces[currentColumn, y] == null)
                 {
-                     for(int yPlus = y +1; yPlus < gridHeight; i++)
+                     for(int yPlus = y +1; yPlus < gridHeight; yPlus++)
                     {
                         if(activePieces[currentColumn, yPlus] != null)
                         {
@@ -302,6 +361,7 @@ public class GameBoard : MonoBehaviour
                             }
 
                             activePieces[currentColumn, yPlus] = null;
+                            StartCoroutine(SetupPieces());
                             break;
                         }
                     }
@@ -329,7 +389,6 @@ public class GameBoard : MonoBehaviour
                 result.Add(piece.x);
             }
         });
-
 
         return result;
     }
@@ -402,7 +461,7 @@ public class GameBoard : MonoBehaviour
                 //reference to the next piece
                 var nextPiece = activePieces[nextX, nextY];
 
-                if(nextPiece != null && nextPiece.pieceType == startPiece.pieceType )
+                if(nextPiece != null && nextPiece.pieceType == startPiece.pieceType)
                 {
 
                     matches.Add(nextPiece);
