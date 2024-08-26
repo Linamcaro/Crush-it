@@ -86,8 +86,8 @@ public class GameBoard : MonoBehaviour
     /// <param name="y"></param>
     private void ClearPiece(int x, int y)
     {
-        var pieceToClear = activePieces[x, y];    
-        Destroy(pieceToClear.gameObject);
+        var pieceToClear = activePieces[x, y];
+        pieceToClear.RemovePiece(true);
         activePieces[x, y] = null;
 
     }
@@ -106,13 +106,14 @@ public class GameBoard : MonoBehaviour
         var pieceSelected = availablePieces.pieces[index];
 
         // Instantiate each piece
-        Vector3 position = new Vector3(x, y, pieceZpos);
+        Vector3 position = new Vector3(x, y + 1, pieceZpos);
         var gridObject = Instantiate(pieceSelected, position, Quaternion.identity);
         gridObject.transform.SetParent(transform);
 
         //Get reference to the piece
         activePieces[x, y] = gridObject.GetComponent<Piece>();
         activePieces[x, y]?.PieceSetUp(x, y, this);
+        activePieces[x, y].MovePiece(x, y);
 
         return activePieces[x, y];
     }
@@ -215,9 +216,6 @@ public class GameBoard : MonoBehaviour
         var StartPiece = activePieces[startTilePos.x, startTilePos.y];
         var EndPiece = activePieces[endTilePos.x, endTilePos.y];
 
-        /*Debug.Log($"StartPiece initial position: ({StartPiece.x}, {StartPiece.y})");
-        Debug.Log($"EndPiece initial position: ({EndPiece.x}, {EndPiece.y})");*/
-
         //Move the pieces to the new positions
         StartPiece.MovePiece(endTilePos.x, endTilePos.y);
         EndPiece.MovePiece(startTilePos.x, startTilePos.y);
@@ -240,11 +238,6 @@ public class GameBoard : MonoBehaviour
 
         if(allMatches.Count == 0)
         {
-            /*Debug.Log("No match found, reverting pieces to original positions.");
-
-            // Log positions before moving back
-            Debug.Log($"Reverting StartPiece from: ({StartPiece.x}, {StartPiece.y}) to ({startTilePos.x}, {startTilePos.y})");
-            Debug.Log($"Reverting EndPiece from: ({EndPiece.x}, {EndPiece.y}) to ({endTilePos.x}, {endTilePos.y})");*/
 
 
             StartPiece.MovePiece(startTilePos.x,startTilePos.y);
@@ -252,12 +245,7 @@ public class GameBoard : MonoBehaviour
 
             activePieces[startTilePos.x, startTilePos.y] = StartPiece;
             activePieces[endTilePos.x,endTilePos.y]= EndPiece;
-
-            //yield return new WaitForSeconds(0.6f); // Wait for the pieces to move back
-
-
-            /*Debug.Log($"StartPiece reverted to: ({StartPiece.x}, {StartPiece.y})");
-            Debug.Log($"EndPiece reverted to: ({EndPiece.x}, {EndPiece.y})");*/
+            isSwapingPieces = false;
 
         }
         else
@@ -265,12 +253,8 @@ public class GameBoard : MonoBehaviour
             ChangePieces(allMatches);
         }
 
-        /*Debug.Log($"StartPiece final position: ({StartPiece.x}, {StartPiece.y})");
-        Debug.Log($"EndPiece final position: ({EndPiece.x}, {EndPiece.y})");*/
-
         startTilePos = null;
-        endTilePos = null;
-        isSwapingPieces = false;    
+        endTilePos = null;   
 
         yield return null;
 
@@ -291,6 +275,10 @@ public class GameBoard : MonoBehaviour
 
     }
 
+    /// <summary>
+    /// Constantly Look for matches
+    /// </summary>
+    /// <param name="collapsedPieces"></param>
     private void FindMatchRecursively(List<Piece> collapsedPieces)
     {
         StartCoroutine(FMRecursively(collapsedPieces));
@@ -322,6 +310,7 @@ public class GameBoard : MonoBehaviour
         else
         {
             yield return new WaitForSeconds(newPiecesCreationTime);
+            StartCoroutine(SetupPieces());
             isSwapingPieces = false;
 
         }
@@ -361,7 +350,7 @@ public class GameBoard : MonoBehaviour
                             }
 
                             activePieces[currentColumn, yPlus] = null;
-                            StartCoroutine(SetupPieces());
+                            //StartCoroutine(SetupPieces());
                             break;
                         }
                     }

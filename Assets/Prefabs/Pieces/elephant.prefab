@@ -101,4 +101,8 @@ MonoBehaviour:
   y: 0
   gameBoard: {fileID: 0}
   pieceMovementTime: 0.25
+  scaleSpeed: 0.35
+  removeScaleUpSpeed: 0.085
+  removeScaleDownSpeed: 0.1
+  removePieceScale: 1.2
   pieceType: 0

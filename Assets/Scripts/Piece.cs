@@ -26,6 +26,11 @@ public class Piece : MonoBehaviour
     [SerializeField] private GameBoard gameBoard;
     [SerializeField] private float pieceMovementTime;
 
+    [SerializeField] private float scaleSpeed;
+    [SerializeField] private float removeScaleUpSpeed;
+    [SerializeField] private float removeScaleDownSpeed;
+    [SerializeField] private float removePieceScale;
+
     public Type pieceType;
 
     public void PieceSetUp(int xCoord, int yCoord, GameBoard board)
@@ -33,6 +38,9 @@ public class Piece : MonoBehaviour
         x = xCoord;
         y = yCoord;
         gameBoard = board;
+
+        transform.localScale = Vector3.one * scaleSpeed;
+        transform.DOScale(Vector3.one, scaleSpeed);
     }
 
     public void MovePiece(int destX, int destY, float destZ = - 5f)
@@ -44,10 +52,29 @@ public class Piece : MonoBehaviour
             x = destX;
             y = destY;
 
-            //Debug.Log($"Piece moved to ({x}, {y})");
+
         };
 
-        //Debug.Log($"Piece moved to ({x}, {y})");
+    }
+
+
+    public void RemovePiece(bool animated)
+    {
+        if (animated)
+        {
+            transform.DORotate(new Vector3(0, 0, -120f), 0.12f);
+            transform.DOScale(Vector3.one * removePieceScale, removeScaleUpSpeed).onComplete = () =>
+            {
+                transform.DOScale(Vector3.zero, removeScaleDownSpeed).onComplete = () =>
+                {
+                    Destroy(gameObject);
+                };
+            };
+
+        }else 
+        {
+            Destroy(gameObject); 
+        }
     }
 
     /*
