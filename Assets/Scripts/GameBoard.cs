@@ -28,6 +28,8 @@ public class GameBoard : MonoBehaviour
     [SerializeField] private float newPiecesCreationTime;
     [SerializeField] private float timeBetweenPieces; //
 
+    [SerializeField] private int pointsPerMatch;
+
 
     // Start is called before the first frame update
     void Start()
@@ -251,6 +253,7 @@ public class GameBoard : MonoBehaviour
         else
         {
             ChangePieces(allMatches);
+            AwardPoints(allMatches);
         }
 
         startTilePos = null;
@@ -297,6 +300,7 @@ public class GameBoard : MonoBehaviour
             {
                 newMatches = newMatches.Union(matches).ToList();
                 ChangePieces(matches);
+                AwardPoints(matches);
             }
         });
 
@@ -505,6 +509,13 @@ public class GameBoard : MonoBehaviour
         return totalMatches;
 
     }
+
+
+    public void AwardPoints(List<Piece> allMatches)
+    {
+        GameManager.Instance.AddPoints(allMatches.Count * pointsPerMatch);
+    }
+
 
 
 }
