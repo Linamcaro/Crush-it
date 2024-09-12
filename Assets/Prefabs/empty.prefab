@@ -143,5 +143,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d395b5450636cd41a7eaa44f74f97ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  pieceMovementTime: 0.25
   spriteRenderer: {fileID: 5973675941085060726}
   foodName: 
+  x: 0
+  y: 0
