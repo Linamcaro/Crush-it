@@ -11,9 +11,9 @@ GameObject:
   - component: {fileID: 1302812136694957895}
   - component: {fileID: 5973675941085060726}
   - component: {fileID: 1096380777151081680}
-  - component: {fileID: 2580273904243134216}
+  - component: {fileID: -4216727903913986572}
   m_Layer: 0
-  m_Name: empty
+  m_Name: empty 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -131,7 +131,7 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 0.8397029, y: 0.8212607}
   m_EdgeRadius: 0
---- !u!114 &2580273904243134216
+--- !u!114 &-4216727903913986572
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -140,14 +140,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 2202989632931950893}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d395b5450636cd41a7eaa44f74f97ad, type: 3}
+  m_Script: {fileID: 11500000, guid: 58585a13e90e23248a60cdaf1444a2e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pieceMovementTime: 0.25
-  removeScaleUpSpeed: 0.085
-  removeScaleDownSpeed: 0.1
-  removePieceScale: 1.2
-  spriteRenderer: {fileID: 5973675941085060726}
-  foodName: 
   x: 0
   y: 0
+  gameBoard: {fileID: 0}
+  pieceMovementTime: 0.6
+  scaleSpeed: 0.2
+  removeScaleUpSpeed: 0.1
+  removeScaleDownSpeed: 0.1
+  removePieceScale: 1.2
+  pieceType: 0

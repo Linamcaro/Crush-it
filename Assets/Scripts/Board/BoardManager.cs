@@ -1,22 +1,57 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class BoardManager : MonoBehaviour
 {
     [SerializeField] private GameObject piecePrefab;
     [SerializeField] private FoodCollectionSO foodCollection; // Reference to the FoodCollection
 
+    [SerializeField] private float newPiecesCreationTime;
+
     private FoodPiece[,] activePieces;
     private bool isSwapingPieces = false;
-
     private Vector2 offset;
+    private int gridWidth;
+    private int gridHeight;
+
+    
+
+    /// <summary>
+    /// Generate the game board
+    /// </summary>
+    /// <param name="layout"></param>
+    public void GenerateBoard(int[,] layout)
+    {
+        gridWidth = layout.GetLength(0);
+        gridHeight = layout.GetLength(1);
+
+        activePieces = new FoodPiece[gridWidth, gridHeight];
+
+        offset = new Vector2((gridWidth - 1) / 2f, (gridHeight - 1) / 2f);
+
+        for (int x = 0; x < gridWidth; x++)
+        {
+            for (int y = 0; y < gridHeight; y++)
+            {
+                if (layout[x, y] == 1) // Only place pieces in cells with a 1
+                {
+                   // Vector3 position = new Vector2(x, y) - offset;
+
+                     StartCoroutine(GenerateFoodPiece(x, y, offset));
+                }
+            }
+        }
+    }
 
     /// <summary>
     /// Generate the food Piece
     /// </summary>
     /// <param name="position"></param>
-    public void GenerateFoodPiece(int x, int y, Vector2 offset)
+    IEnumerator GenerateFoodPiece(int x, int y, Vector2 offset)
     {
 
         Vector2 position = new Vector2(x, y) - offset;
@@ -26,41 +61,45 @@ public class BoardManager : MonoBehaviour
 
         // Get a random food item from the collection
         int index = Random.Range(0, foodCollection.foodItems.Count);
-        FoodItemSO randomFood = foodCollection.foodItems[index]; 
+        FoodItemSO randomFood = foodCollection.foodItems[index];
 
         activePieces[x, y] = piece.GetComponent<FoodPiece>();
-        activePieces[x,y]?.SetFood(randomFood.foodName, randomFood.foodSprite, x, y);
+        activePieces[x, y]?.SetFood(randomFood.foodName, randomFood.foodSprite, x, y);
+
+        yield return null;
 
     }
 
     /// <summary>
-    /// Generate the game board
+    /// Destroy the game object and clean the reference
     /// </summary>
-    /// <param name="layout"></param>
-    public void GenerateBoard(int[,] layout)
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    private void ClearPiece(int x, int y)
     {
-       int width = layout.GetLength(0);
-       int height = layout.GetLength(1);
-
-        activePieces = new FoodPiece[width, height];
-
-        offset = new Vector2((width - 1) / 2f, (height - 1) / 2f);
-
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                if (layout[x, y] == 1) // Only place pieces in cells with a 1
-                {
-                   // Vector3 position = new Vector2(x, y) - offset;
-
-                     GenerateFoodPiece(x, y, offset);
-                }
-            }
-        }
+        var pieceToClear = activePieces[x, y];
+        pieceToClear.RemovePiece(true);
     }
 
+    private void ChangePieces(List<FoodPiece> piecesToClear)
+    {
+        piecesToClear.ForEach(piece =>
+        {
+            ClearPiece(piece.x, piece.y);
 
+        });
+
+        List<int> columnsToFill = GetColumnsToFill(piecesToClear);
+        List<FoodPiece> collapsedPieces = CollapseColumns(columnsToFill, 0.3f);
+
+        FindMatchRecursively(collapsedPieces);
+    }
+
+    /// <summary>
+    /// Change the food pieces positions
+    /// </summary>
+    /// <param name="startTilePos"></param>
+    /// <param name="endTilePos"></param>
     public void SwapTiles(FoodPiece startTilePos, FoodPiece endTilePos)
     {
         if (!isSwapingPieces)
@@ -80,6 +119,13 @@ public class BoardManager : MonoBehaviour
         var StartPiece = activePieces[startTilePos.x, startTilePos.y];
         var EndPiece = activePieces[endTilePos.x, endTilePos.y];
 
+        // Log initial positions and piece references
+        Debug.Log("StartPiece initial: " + StartPiece.name + " at (" + startTilePos.x + ", " + startTilePos.y + ")");
+        Debug.Log("EndPiece initial: " + EndPiece.name + " at (" + endTilePos.x + ", " + endTilePos.y + ")");
+
+        // Move the pieces to the new positions
+        Debug.Log("Swapping pieces...");
+
         //Move the pieces to the new positions
         StartPiece.MovePiece(endTilePos.x, endTilePos.y, offset);
         EndPiece.MovePiece(startTilePos.x, startTilePos.y, offset);
@@ -88,9 +134,14 @@ public class BoardManager : MonoBehaviour
         activePieces[startTilePos.x, startTilePos.y] = EndPiece;
         activePieces[endTilePos.x, endTilePos.y] = StartPiece;
 
+        // Log positions after swap
+        Debug.Log("StartPiece after swap: " + StartPiece.name + " moved to (" + endTilePos.x + ", " + endTilePos.y + ")");
+        Debug.Log("EndPiece after swap: " + EndPiece.name + " moved to (" + startTilePos.x + ", " + startTilePos.y + ")");
+
+
         yield return new WaitForSeconds(0.6f);
 
-        /* //check matches for the first piece
+        //check matches for the first piece
          var startMatches = GetMatchByPiece(startTilePos.x, startTilePos.y, 3);
          //check matches for the second piece
          var endMatches = GetMatchByPiece(endTilePos.x, endTilePos.y, 3);
@@ -102,28 +153,251 @@ public class BoardManager : MonoBehaviour
 
          if (allMatches.Count == 0)
          {
+            Debug.Log("No matches found, reversing swap.");
+
+            // Log before reversing
+            Debug.Log("Reversing StartPiece: " + StartPiece.name + " from (" + endTilePos.x + ", " + endTilePos.y + ")");
+            Debug.Log("Reversing EndPiece: " + EndPiece.name + " from (" + startTilePos.x + ", " + startTilePos.y + ")");
+
+            StartPiece.MovePiece(startTilePos.x, startTilePos.y, offset);
+            EndPiece.MovePiece(endTilePos.x, endTilePos.y, offset);
+
+            activePieces[startTilePos.x, startTilePos.y] = StartPiece;
+            activePieces[endTilePos.x, endTilePos.y] = EndPiece;
+
+            yield return new WaitForSeconds(0.6f);
+            // Log after reversing
+            Debug.Log("Reversed StartPiece to (" + startTilePos.x + ", " + startTilePos.y + ")");
+            Debug.Log("Reversed EndPiece to (" + endTilePos.x + ", " + endTilePos.y + ")");
 
 
-             StartPiece.MovePiece(startTilePos.x, startTilePos.y);
-             EndPiece.MovePiece(endTilePos.x, endTilePos.y);
+            isSwapingPieces = false;
 
-             activePieces[startTilePos.x, startTilePos.y] = StartPiece;
-             activePieces[endTilePos.x, endTilePos.y] = EndPiece;
-             isSwapingPieces = false;
+            
 
-         }
+        }
          else
          {
-             ChangePieces(allMatches);
-             AwardPoints(allMatches);
+            // Process the matched pieces
+            Debug.Log("Matches found! Processing pieces.");
+
+            //ChangePieces(allMatches);
+            //AwardPoints(allMatches);
+            isSwapingPieces = false;
          }
 
-         startTilePos = null;
-         endTilePos = null;*/
+        startTilePos = null;
+        endTilePos = null;
 
-        isSwapingPieces = false;
         yield return null;
+    }
+
+    /// <summary>
+    /// Check if there are matches in a given direction
+    /// </summary>
+    /// <param name="xPos"></param>
+    /// <param name="yPos"></param>
+    /// <param name="direction"></param>
+    /// <param name="minPieces"></param>
+    /// <returns></returns>
+    private List<FoodPiece> GetMatchByDirection(int xPos, int yPos, Vector2 direction, int minPieces = 3)
+    {
+        //List of found pieces that matches
+        List<FoodPiece> matches = new List<FoodPiece>();
+        //Start piece
+        FoodPiece startPiece = activePieces[xPos, yPos];
+        matches.Add(startPiece);
+
+        int nextX;
+        int nextY;
+        int maxVal = Math.Max(gridWidth, gridHeight);
+
+        for (int i = 1; i < maxVal; i++)
+        {
+            nextX = xPos + ((int)direction.x * i);
+            nextY = yPos + ((int)direction.y * i);
+
+            if (nextX >= 0 && nextX < gridWidth && nextY >= 0 && nextY < gridHeight)
+            {
+                //reference to the next piece
+                var nextPiece = activePieces[nextX, nextY];
+
+                if (nextPiece != null && nextPiece.foodName == startPiece.foodName)
+                {
+
+                    matches.Add(nextPiece);
+
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
+        if (matches.Count >= minPieces)
+        {
+            return matches;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Check the total matches in the 4 directions
+    /// </summary>
+    /// <param name="xPos"></param>
+    /// <param name="yPos"></param>
+    /// <param name="minPieces"></param>
+    /// <returns></returns>
+    public List<FoodPiece> GetMatchByPiece(int xPos, int yPos, int minPieces = 3)
+    {
+
+        var matchAbove = GetMatchByDirection(xPos, yPos, new Vector2(0, 1), 2) ?? new List<FoodPiece>();
+        var matchBelow = GetMatchByDirection(xPos, yPos, new Vector2(0, -1), 2) ?? new List<FoodPiece>();
+        var matchRight = GetMatchByDirection(xPos, yPos, new Vector2(1, 0), 2) ?? new List<FoodPiece>();
+        var matchLeft = GetMatchByDirection(xPos, yPos, new Vector2(-1, 0), 2) ?? new List<FoodPiece>();
+
+        //joint the lists
+        var verticalMatch = matchAbove.Union(matchBelow).ToList();
+        var horizontalMatch = matchLeft.Union(matchRight).ToList();
+
+        var totalMatches = new List<FoodPiece>();
+
+        if (verticalMatch.Count >= minPieces)
+        {
+            totalMatches = totalMatches.Union(verticalMatch).ToList();
+        }
+
+        if (horizontalMatch.Count >= minPieces)
+        {
+            totalMatches = totalMatches.Union(horizontalMatch).ToList();
+        }
+
+        return totalMatches;
 
     }
 
+    /// <summary>
+    /// Move the pieces down after a match
+    /// </summary>
+    /// <param name="columnsToFill"></param>
+    /// <param name="collapseTime"></param>
+    /// <returns></returns>
+    /// <exception cref="NotImplementedException"></exception>
+    private List<FoodPiece> CollapseColumns(List<int> columnsToFill, float collapseTime)
+    {
+        List<FoodPiece> collapsedPieces = new List<FoodPiece>();
+
+        for (int i = 0; i < columnsToFill.Count; i++)
+        {
+            var currentColumn = columnsToFill[i];
+
+            for (int y = 0; y < gridHeight; y++)
+            {
+                if (activePieces[currentColumn, y] == null)
+                {
+                    for (int yPlus = y + 1; yPlus < gridHeight; yPlus++)
+                    {
+                        if (activePieces[currentColumn, yPlus] != null)
+                        {
+                            activePieces[currentColumn, yPlus].MovePiece(currentColumn, y, offset);
+                            activePieces[currentColumn, y] = activePieces[currentColumn, yPlus];
+
+                            if (!collapsedPieces.Contains(activePieces[currentColumn, y])) 
+                            {
+                                collapsedPieces.Add(activePieces[currentColumn, y]);
+                            }
+
+                            activePieces[currentColumn, yPlus] = null;
+                            
+                            break;
+                        }
+                    }
+                };
+            }
+        }
+
+        return collapsedPieces;
+
+    }
+
+    /// <summary>
+    /// Get list of columns where the pieces where eliminated
+    /// </summary>
+    /// <param name="piecesToClear"></param>
+    /// <returns></returns>
+    private List<int> GetColumnsToFill(List<FoodPiece> piecesToClear)
+    {
+        var result = new List<int>();
+
+        piecesToClear.ForEach(piece =>
+        {
+            if (!result.Contains(piece.x))
+            {
+                result.Add(piece.x);
+            }
+        });
+
+        return result;
+    }
+
+    /// <summary>
+    /// Constantly Look for matches
+    /// </summary>
+    /// <param name="collapsedPieces"></param>
+    private void FindMatchRecursively(List<FoodPiece> collapsedPieces)
+    {
+        StartCoroutine(FMRecursively(collapsedPieces));
+    }
+
+    IEnumerator FMRecursively(List<FoodPiece> collapsedPieces)
+    {
+        yield return new WaitForSeconds(1f);
+        List<FoodPiece> newMatches = new List<FoodPiece>();
+
+        collapsedPieces.ForEach(piece =>
+        {
+            var matches = GetMatchByPiece(piece.x, piece.y, 3);
+
+            if (matches != null)
+            {
+                newMatches = newMatches.Union(matches).ToList();
+                ChangePieces(matches);
+                //AwardPoints(matches);
+            }
+        });
+
+        if (newMatches.Count > 0)
+        {
+            var newCollapsedPieces = CollapseColumns(GetColumnsToFill(newMatches), 0.3f);
+            yield return new WaitForSeconds(0.5f);
+            FindMatchRecursively(newCollapsedPieces);
+
+        }
+        else
+        {
+            yield return new WaitForSeconds(newPiecesCreationTime);
+            //StartCoroutine(SetupPieces());
+            isSwapingPieces = false;
+
+        }
+
+        yield return null;
+    }
+
+    /// <summary>
+    /// Check if there are matches below or before
+    /// </summary>
+    /// <param name="xPos"></param>
+    /// <param name="yPos"></param>
+    /// <returns></returns>
+    private bool HasPreviewsMatches(int xPos, int yPos)
+    {
+        var downMatches = GetMatchByDirection(xPos, yPos, new Vector2(0, -1), 2) ?? new List<FoodPiece>();
+        var leftMatches = GetMatchByDirection(xPos, yPos, new Vector2(-1, 0), 2) ?? new List<FoodPiece>();
+
+        return (downMatches.Count > 0 || leftMatches.Count > 0);
+
+    }
 }

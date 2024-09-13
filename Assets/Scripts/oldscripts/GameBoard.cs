@@ -8,8 +8,8 @@ using Random = UnityEngine.Random;
 public class GameBoard : MonoBehaviour
 {
 
-    [SerializeField] private int gridWidth; //gameboard width
-    [SerializeField] private int gridHeight; //gameboard height
+    [SerializeField] private int gridWidth; //gameboard gridWidth
+    [SerializeField] private int gridHeight; //gameboard gridHeight
     [SerializeField] private int pieceZpos;
     [SerializeField] private float cameraSizeOffset;// move camera horizontal
     [SerializeField] private float cameraVerticalOffset; // move camera vertical
@@ -240,8 +240,6 @@ public class GameBoard : MonoBehaviour
 
         if(allMatches.Count == 0)
         {
-
-
             StartPiece.MovePiece(startTilePos.x,startTilePos.y);
             EndPiece.MovePiece(endTilePos.x, endTilePos.y);
 

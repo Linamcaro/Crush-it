@@ -198,6 +198,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   piecePrefab: {fileID: 2202989632931950893, guid: 05589a00a50266b49a3e6d2ed8b5228f, type: 3}
   foodCollection: {fileID: 11400000, guid: e869299797a8e8143bc73a6f3a15781d, type: 2}
+  newPiecesCreationTime: 0.05
 --- !u!4 &498737229
 Transform:
   m_ObjectHideFlags: 0
