@@ -10,8 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1302812136694957895}
   - component: {fileID: 5973675941085060726}
-  - component: {fileID: 1096380777151081680}
   - component: {fileID: 2580273904243134216}
+  - component: {fileID: 6195645395021650761}
   m_Layer: 0
   m_Name: empty
   m_TagString: Untagged
@@ -28,8 +28,8 @@ Transform:
   m_GameObject: {fileID: 2202989632931950893}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0.0042, y: 0, z: 0}
+  m_LocalScale: {x: 0.9911, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -86,7 +86,27 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!61 &1096380777151081680
+--- !u!114 &2580273904243134216
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2202989632931950893}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d395b5450636cd41a7eaa44f74f97ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pieceMovementTime: 0.25
+  removeScaleUpSpeed: 0.085
+  removeScaleDownSpeed: 0.1
+  removePieceScale: 1.2
+  spriteRenderer: {fileID: 5973675941085060726}
+  foodName: 
+  x: 0
+  y: 0
+--- !u!61 &6195645395021650761
 BoxCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -115,10 +135,10 @@ BoxCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0.0018441975, y: -0.003688395}
+  m_Offset: {x: -0.010604054, y: 0.002101913}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -129,25 +149,5 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.8397029, y: 0.8212607}
+  m_Size: {x: 0.81517655, y: 0.8163465}
   m_EdgeRadius: 0
---- !u!114 &2580273904243134216
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2202989632931950893}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d395b5450636cd41a7eaa44f74f97ad, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  pieceMovementTime: 0.25
-  removeScaleUpSpeed: 0.085
-  removeScaleDownSpeed: 0.1
-  removePieceScale: 1.2
-  spriteRenderer: {fileID: 5973675941085060726}
-  foodName: 
-  x: 0
-  y: 0

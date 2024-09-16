@@ -18,7 +18,9 @@ public class BoardManager : MonoBehaviour
     private int gridWidth;
     private int gridHeight;
 
-    
+    private FoodPiece startTilePos;
+    private FoodPiece endTilePos;
+
 
     /// <summary>
     /// Generate the game board
@@ -64,7 +66,8 @@ public class BoardManager : MonoBehaviour
         FoodItemSO randomFood = foodCollection.foodItems[index];
 
         activePieces[x, y] = piece.GetComponent<FoodPiece>();
-        activePieces[x, y]?.SetFood(randomFood.foodName, randomFood.foodSprite, x, y);
+        activePieces[x, y]?.SetFood(randomFood.foodName, randomFood.foodSprite);
+        activePieces[x, y]?.SetCoordinates(x, y, this);
 
         yield return null;
 
@@ -81,7 +84,7 @@ public class BoardManager : MonoBehaviour
         pieceToClear.RemovePiece(true);
     }
 
-    private void ChangePieces(List<FoodPiece> piecesToClear)
+    /* void ChangePieces(List<FoodPiece> piecesToClear)
     {
         piecesToClear.ForEach(piece =>
         {
@@ -93,38 +96,97 @@ public class BoardManager : MonoBehaviour
         List<FoodPiece> collapsedPieces = CollapseColumns(columnsToFill, 0.3f);
 
         FindMatchRecursively(collapsedPieces);
+    }*/
+
+    /// <summary>
+    /// called when player selects a tile
+    /// </summary>
+    /// <param name="tileSelected"></param>
+    public void OnPieceSelected(FoodPiece tileSelected)
+    {
+        if (!isSwapingPieces)
+        {
+            startTilePos = tileSelected;
+        }
+
     }
 
     /// <summary>
+    /// called when player holds selection and move it to other position
+    /// </summary>
+    /// <param name="tileOver"></param>
+    public void OnPieceMoved(FoodPiece tileOver)
+    {
+        if (!isSwapingPieces)
+        {
+            endTilePos = tileOver;
+        }
+
+    }
+
+    /// <summary>
+    /// Called when player release the tile selected
+    /// </summary>
+    /// <param name="tileDropped"></param>
+    public void OnPieceDropped(FoodPiece tileDropped)
+    {
+        if (!isSwapingPieces)
+        {
+            if (startTilePos != null && endTilePos != null && IsCloseTo(startTilePos, endTilePos))
+            {
+                StartCoroutine(SwapTilesIE());
+            }
+        }
+    }
+
+    /// <summary>
+    /// check if the target tiles are next to each other
+    /// </summary>
+    /// <param name="start"></param>
+    /// <param name="end"></param>
+    /// <returns></returns>
+    private bool IsCloseTo(FoodPiece start, FoodPiece end)
+    {
+        //check if the destination of the piece to move in x is next to the current position 
+        if (Math.Abs((start.x - end.x)) == 1 && start.y == end.y)
+        {
+            return true;
+        }
+        //check if the destination of the piece to move in Y is next to the current position 
+        else if (Math.Abs((start.y - end.y)) == 1 && start.x == end.x)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+
+
+
+    /*/// <summary>
     /// Change the food pieces positions
     /// </summary>
     /// <param name="startTilePos"></param>
     /// <param name="endTilePos"></param>
     public void SwapTiles(FoodPiece startTilePos, FoodPiece endTilePos)
     {
-        if (!isSwapingPieces)
-        {
+       // if (!isSwapingPieces)
+        //{
             StartCoroutine(SwapTilesIE(startTilePos, endTilePos));
-        }
-    }
+        //}
+    }*/
 
     /// <summary>
     /// Swap the tile to the new position
     /// </summary>
-    IEnumerator SwapTilesIE(FoodPiece startTilePos, FoodPiece endTilePos)
+    IEnumerator SwapTilesIE()
     {
         isSwapingPieces = true;
 
         //Save refence of the pieces in the two positions
         var StartPiece = activePieces[startTilePos.x, startTilePos.y];
         var EndPiece = activePieces[endTilePos.x, endTilePos.y];
-
-        // Log initial positions and piece references
-        Debug.Log("StartPiece initial: " + StartPiece.name + " at (" + startTilePos.x + ", " + startTilePos.y + ")");
-        Debug.Log("EndPiece initial: " + EndPiece.name + " at (" + endTilePos.x + ", " + endTilePos.y + ")");
-
-        // Move the pieces to the new positions
-        Debug.Log("Swapping pieces...");
 
         //Move the pieces to the new positions
         StartPiece.MovePiece(endTilePos.x, endTilePos.y, offset);
@@ -134,63 +196,41 @@ public class BoardManager : MonoBehaviour
         activePieces[startTilePos.x, startTilePos.y] = EndPiece;
         activePieces[endTilePos.x, endTilePos.y] = StartPiece;
 
-        // Log positions after swap
-        Debug.Log("StartPiece after swap: " + StartPiece.name + " moved to (" + endTilePos.x + ", " + endTilePos.y + ")");
-        Debug.Log("EndPiece after swap: " + EndPiece.name + " moved to (" + startTilePos.x + ", " + startTilePos.y + ")");
-
-
         yield return new WaitForSeconds(0.6f);
 
         //check matches for the first piece
-         var startMatches = GetMatchByPiece(startTilePos.x, startTilePos.y, 3);
-         //check matches for the second piece
-         var endMatches = GetMatchByPiece(endTilePos.x, endTilePos.y, 3);
+        var startMatches = GetMatchByPiece(startTilePos.x, startTilePos.y, 3);
+        //check matches for the second piece
+        var endMatches = GetMatchByPiece(endTilePos.x, endTilePos.y, 3);
 
-         //store all the matches
-         var allMatches = startMatches.Union(endMatches).ToList();
+        //store all the matches
+        var allMatches = startMatches.Union(endMatches).ToList();
 
 
 
-         if (allMatches.Count == 0)
-         {
-            Debug.Log("No matches found, reversing swap.");
-
-            // Log before reversing
-            Debug.Log("Reversing StartPiece: " + StartPiece.name + " from (" + endTilePos.x + ", " + endTilePos.y + ")");
-            Debug.Log("Reversing EndPiece: " + EndPiece.name + " from (" + startTilePos.x + ", " + startTilePos.y + ")");
-
+        if (allMatches.Count == 0)
+        {
             StartPiece.MovePiece(startTilePos.x, startTilePos.y, offset);
             EndPiece.MovePiece(endTilePos.x, endTilePos.y, offset);
 
             activePieces[startTilePos.x, startTilePos.y] = StartPiece;
             activePieces[endTilePos.x, endTilePos.y] = EndPiece;
-
-            yield return new WaitForSeconds(0.6f);
-            // Log after reversing
-            Debug.Log("Reversed StartPiece to (" + startTilePos.x + ", " + startTilePos.y + ")");
-            Debug.Log("Reversed EndPiece to (" + endTilePos.x + ", " + endTilePos.y + ")");
-
-
             isSwapingPieces = false;
-
-            
 
         }
-         else
-         {
-            // Process the matched pieces
-            Debug.Log("Matches found! Processing pieces.");
-
+        else
+        {
             //ChangePieces(allMatches);
             //AwardPoints(allMatches);
-            isSwapingPieces = false;
-         }
+        }
 
         startTilePos = null;
         endTilePos = null;
 
         yield return null;
+
     }
+
 
     /// <summary>
     /// Check if there are matches in a given direction
@@ -278,7 +318,7 @@ public class BoardManager : MonoBehaviour
 
     }
 
-    /// <summary>
+    /*/// <summary>
     /// Move the pieces down after a match
     /// </summary>
     /// <param name="columnsToFill"></param>
@@ -340,9 +380,9 @@ public class BoardManager : MonoBehaviour
         });
 
         return result;
-    }
+    }*/
 
-    /// <summary>
+    /*/// <summary>
     /// Constantly Look for matches
     /// </summary>
     /// <param name="collapsedPieces"></param>
@@ -384,7 +424,7 @@ public class BoardManager : MonoBehaviour
         }
 
         yield return null;
-    }
+    }*/
 
     /// <summary>
     /// Check if there are matches below or before
@@ -392,12 +432,12 @@ public class BoardManager : MonoBehaviour
     /// <param name="xPos"></param>
     /// <param name="yPos"></param>
     /// <returns></returns>
-    private bool HasPreviewsMatches(int xPos, int yPos)
+   /* private bool HasPreviewsMatches(int xPos, int yPos)
     {
         var downMatches = GetMatchByDirection(xPos, yPos, new Vector2(0, -1), 2) ?? new List<FoodPiece>();
         var leftMatches = GetMatchByDirection(xPos, yPos, new Vector2(-1, 0), 2) ?? new List<FoodPiece>();
 
         return (downMatches.Count > 0 || leftMatches.Count > 0);
 
-    }
+    }*/
 }

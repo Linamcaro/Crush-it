@@ -18,34 +18,40 @@ public class FoodPiece : MonoBehaviour
     public int x;
     public int y;
 
-
+    [SerializeField] private BoardManager boardManager;
 
     // Method to set the food type and sprite for the piece
-    public void SetFood(string foodName, Sprite foodSprite, int xCoord, int yCoord)
+    public void SetFood(string foodName, Sprite foodSprite)
     {
         this.foodName = foodName;
         spriteRenderer.sprite = foodSprite; // Assign the sprite to the piece
+    }
+
+
+    // Method to set the  food coordinates for the piece
+    public void SetCoordinates(int xCoord, int yCoord, BoardManager board)
+    {
         x = xCoord;
         y = yCoord;
-
+        boardManager = board;
     }
 
 
     void OnMouseDown()
     {
-        
-         SelectionManager.Instance.OnPieceSelected(this);
+
+        boardManager.OnPieceSelected(this);
         
     }
     //hover mouse
     public void OnMouseEnter()
     {
-        SelectionManager.Instance.OnPieceMoved(this);
+        boardManager.OnPieceMoved(this);
     }
 
     private void OnMouseUp()
     {
-        SelectionManager.Instance.OnPieceDropped(this);
+        boardManager.OnPieceDropped(this);
     }
 
 
@@ -57,22 +63,15 @@ public class FoodPiece : MonoBehaviour
     /// <param name="offset"></param>
     public void MovePiece(int destX, int destY, Vector2 offset)
     {
-        Debug.Log("Moving piece: " + this.name + " to position (" + destX + ", " + destY + ")");
 
-        Vector2 targetPosition = new Vector2(destX, destY) - offset; // Calculate the world position
+        Vector2 targetPosition = new Vector2(destX, destY) ; // Calculate the world position
 
-        Debug.Log("The target position is: " + targetPosition);
 
-        transform.DOMove(targetPosition, pieceMovementTime).SetEase(Ease.InOutCubic).onComplete = () =>
+        transform.DOMove(targetPosition, pieceMovementTime).SetEase(Ease.OutBack).OnComplete (() =>
         {
             x = destX; // Update grid position after the movement
             y = destY;
-
-            Debug.Log("Piece moved to x: " + x + "and y: " + y + "destination" );
-
-        };
-
-         Debug.Log("Piece moved: " + this.name + " to actual position: " + transform.position);
+        });
     }
 
     public void RemovePiece(bool animated)
@@ -87,7 +86,6 @@ public class FoodPiece : MonoBehaviour
                     Destroy(gameObject);
                 };
             };
-
         }
         else
         {
